@@ -1,14 +1,59 @@
 from django.shortcuts import render, redirect
-from items.models import Item
+from items.models import Item, FavoriteItem
 from .forms import UserRegisterForm, UserLoginForm
 from django.contrib.auth import login, logout, authenticate
+from django.db.models import Q
+from django.http import JsonResponse
 
 # Create your views here.
+def fav_item(request, item_id):
+    item_obj = Item.objects.get(id=item_id)
+    favorite_obj, created = FavoriteItem.objects.get_or_create(item=item_obj, user=request.user)
+    if created:
+        action = "favorite"
+    else:
+        action = "unfavorite"
+        favorite_obj.delete()
+   
+    data = {
+        "action": action,
+
+    }
+    return JsonResponse(data)
+
+
+
 def item_list(request):
+    if request.user.is_anonymous:
+        return redirect('user-login')
+    item = Item.objects.all()
+    query = request.GET.get("q")
+    if query:
+        item = Item.objects.filter(Q(name__icontains=query)|Q(description__icontains=query)).distinct()
+    favs = [] 
+    for fav in FavoriteItem.objects.filter(user=request.user):
+        favs.append(fav.item.id)
     context = {
-        "items": Item.objects.all()
+        "items": item,
+        "my_favorite":favs,
     }
     return render(request, 'item_list.html', context)
+
+def fav_list(request):
+    if request.user.is_anonymous:
+        return redirect('user-login')
+    item = Item.objects.all()
+    query = request.GET.get("q")
+    if query:
+        item = Item.objects.filter(Q(name__icontains=query)|Q(description__icontains=query)).distinct()
+    favs = [] 
+    for fav in FavoriteItem.objects.filter(user=request.user):
+        favs.append(fav.item.id)
+    context = {
+        "items": item,
+        "my_favorite":favs,
+    }
+    return render(request, 'favorites.html', context)
 
 def item_detail(request, item_id):
     context = {

@@ -7,6 +7,7 @@
 </form>
 <div class="row">
 {% for item in items %}
+{% if item.id in my_favorite %}
 <div class="col-sm-4 py-2">
         <div class="card h-100">
             <img class="card-img-top" height="55%" src="{{item.image.url}}" alt="Card image cap">
@@ -17,7 +18,7 @@
             </div>
         </div>
     </div>
-
+{% endif %}
 {% endfor %}
 </div>
 
